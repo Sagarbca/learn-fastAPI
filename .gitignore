@@ -90,3 +90,4 @@ node_modules/
 # Misc
 coverage/
 htmlcov/
+*.pyc
