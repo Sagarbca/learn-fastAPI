@@ -1,5 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, status, HTTPException,Request
 from pydantic import BaseModel
+from fastapi.responses import JSONResponse
 
 app = FastAPI()
 
@@ -65,5 +66,26 @@ class User(BaseModel):
 
 
 @app.post("/create_user_with_pydantic_model")
-def create_user_with_pydantic(user: User):
+def create_user_with_pydantic(user: User, status_code: int = status.HTTP_201_CREATED):
     return {"message": "User created", "user": user}
+
+
+@app.get("/userById/{user_id}")
+def get_user_by_id(user_id: int):
+    if user_id < 1:
+        raise HTTPException(status_code=400, detail="Invalid user ID")
+    return {"user_id": user_id, "name": f"User {user_id}"}
+
+
+
+class UserNotFoundException(Exception):
+    def __init__(self, user_id: int):
+        self.user_id = user_id
+
+
+@app.exception_handler(UserNotFoundException)
+async def user_not_found_exception_handler(request: Request, exc: UserNotFoundException):
+    return JSONResponse(
+        status_code=404,
+        content={"message": f"User with ID {exc.user_id} not found."},
+    )
