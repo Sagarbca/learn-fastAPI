@@ -39,3 +39,13 @@ async def get_products(limit : int = 10):
 async def get_products(limit : int = 10, offset : int = 0):
     return {"products": ["Product 1", "Product 2", "Product 3"], "limit": limit, "offset": offset}
 
+
+#handle pydantic and post route
+@app.post("/create_user")
+def create_user(name: str, age: int):
+    return {"message": "User created", "user": {"name": name, "age": age}}
+
+
+@app.post("/create_user_with_json")
+def create_user_pydantic(user: dict):
+    return {"message": "User created", "user": user}
