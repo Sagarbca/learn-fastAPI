@@ -1,69 +1,34 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
+from sqlalchemy import create_engine, Column, Integer, String, Boolean
+from sqlalchemy.orm import declarative_base, sessionmaker, Session
+
+from fastapi import FastAPI, Depends
+import sqlite3
 
 app = FastAPI()
+DATABASE_URL = "sqlite:///./test.db"
 
-@app.get("/")
-async def home():
-    return {"Hello": "World"}
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+session_local = sessionmaker( bind=engine)
+Base = declarative_base()
 
-#about
-@app.get("/about")
-async def about():
-    return {"About": "This is a FastAPI application."}
+class Todo(Base):
+    __tablename__ = "todos"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, index=True)
+    description = Column(String, index=True)
+    completed = Column(Boolean, default=False)
 
+Base.metadata.create_all(bind=engine)
 
-#users
-@app.get("/users")
-async def get_users():
-    return {"users": ["Alice", "Bob", "Charlie"]}
-
-
-#dynamic users route
-@app.get("/user/{user_id}")
-async def get_user(user_id: int):
-    return {"user_id": user_id, "name": f"User {user_id}"}
-
-#optional routes
-@app.get("/items")
-async def get_items(item : str = "None"):
-    return {"item": item}
+def get_db():
+    db = session_local()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
-#default route
-@app.get("/products")
-async def get_products(limit : int = 10):
-    return {"products": ["Product 1", "Product 2", "Product 3"], "limit": limit}
-
-#multiple query parameters
-@app.get("/productsWithLimitOffset")
-async def get_products(limit : int = 10, offset : int = 0):
-    return {"products": ["Product 1", "Product 2", "Product 3"], "limit": limit, "offset": offset}
-
-
-#handle pydantic and post route
-@app.post("/create_user")
-def create_user(name: str, age: int):
-    return {"message": "User created", "user": {"name": name, "age": age}}
-
-
-@app.post("/create_user_with_json")
-def create_user_pydantic(user: dict):
-    return {"message": "User created", "user": user}
-
-class Address(BaseModel):
-    street: str
-    city: str
-    state: str
-    zip_code: str
-
-class User(BaseModel):
-    name: str
-    age: int
-    email: str
-    address: Address
-
-
-@app.post("/create_user_with_pydantic_model")
-def create_user_with_pydantic(user: User):
-    return {"message": "User created", "user": user}
+@app.get("/todos")
+def read_todos(db: Session = Depends(get_db)):
+    todos = db.query(Todo).all()
+    return todos
