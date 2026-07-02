@@ -51,12 +51,19 @@ def create_user(name: str, age: int):
 def create_user_pydantic(user: dict):
     return {"message": "User created", "user": user}
 
+class Address(BaseModel):
+    street: str
+    city: str
+    state: str
+    zip_code: str
 
 class User(BaseModel):
     name: str
     age: int
+    email: str
+    address: Address
 
 
-@app.post("/create_user_with_pydantic")
+@app.post("/create_user_with_pydantic_model")
 def create_user_with_pydantic(user: User):
     return {"message": "User created", "user": user}
