@@ -1,69 +1,32 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
+from fastapi import FastAPI,depends, HTTPException,Header
 
 app = FastAPI()
 
-@app.get("/")
-async def home():
-    return {"Hello": "World"}
+def common_logic():
+    return {
+        "message": "This is a common logic function that can be reused across multiple endpoints."
+    }
 
-#about
-@app.get("/about")
-async def about():
-    return {"About": "This is a FastAPI application."}
+@app.get("/home")
+def read_home(data = depends(common_logic)):
+    return data 
 
+def get_current_user():
+    return {"user": "John Doe"}
 
-#users
-@app.get("/users")
-async def get_users():
-    return {"users": ["Alice", "Bob", "Charlie"]}
+@app.get("/profile")
+def read_profile(current_user = depends(get_current_user)):
+    return {"message": f"Hello, {current_user['user']}! This is your profile."}
 
+@app.get("/dashboard")
+def dashboard(current_user = depends(get_current_user)):
+    return {"message": f"Hello, {current_user['user']}! This is your dashboard."}
 
-#dynamic users route
-@app.get("/user/{user_id}")
-async def get_user(user_id: int):
-    return {"user_id": user_id, "name": f"User {user_id}"}
+def verify_token(token: str = Header(None)):
+    if token != "valid_token":
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return {"user": "John Doe"}
 
-#optional routes
-@app.get("/items")
-async def get_items(item : str = "None"):
-    return {"item": item}
-
-
-#default route
-@app.get("/products")
-async def get_products(limit : int = 10):
-    return {"products": ["Product 1", "Product 2", "Product 3"], "limit": limit}
-
-#multiple query parameters
-@app.get("/productsWithLimitOffset")
-async def get_products(limit : int = 10, offset : int = 0):
-    return {"products": ["Product 1", "Product 2", "Product 3"], "limit": limit, "offset": offset}
-
-
-#handle pydantic and post route
-@app.post("/create_user")
-def create_user(name: str, age: int):
-    return {"message": "User created", "user": {"name": name, "age": age}}
-
-
-@app.post("/create_user_with_json")
-def create_user_pydantic(user: dict):
-    return {"message": "User created", "user": user}
-
-class Address(BaseModel):
-    street: str
-    city: str
-    state: str
-    zip_code: str
-
-class User(BaseModel):
-    name: str
-    age: int
-    email: str
-    address: Address
-
-
-@app.post("/create_user_with_pydantic_model")
-def create_user_with_pydantic(user: User):
-    return {"message": "User created", "user": user}
+@app.get("/secure-data")
+def read_secure_data(current_user = depends(verify_token)):
+    return {"message": f"Hello, {current_user['user']}! This is your secure data."}
