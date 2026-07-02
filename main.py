@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -48,4 +49,14 @@ def create_user(name: str, age: int):
 
 @app.post("/create_user_with_json")
 def create_user_pydantic(user: dict):
+    return {"message": "User created", "user": user}
+
+
+class User(BaseModel):
+    name: str
+    age: int
+
+
+@app.post("/create_user_with_pydantic")
+def create_user_with_pydantic(user: User):
     return {"message": "User created", "user": user}
