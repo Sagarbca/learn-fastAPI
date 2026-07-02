@@ -67,3 +67,72 @@ class User(BaseModel):
 @app.post("/create_user_with_pydantic_model")
 def create_user_with_pydantic(user: User):
     return {"message": "User created", "user": user}
+
+
+#add Todo applocation
+
+todos = []
+class Todo(BaseModel):
+    id: int
+    title: str
+    description: str
+    completed: bool
+
+
+#add todo route
+@app.post("/todos")
+def create_todo(todo: Todo):
+    todos.append(todo)
+    return {"message": "Todo created", "todo": todo}
+
+
+#get all todos
+@app.get("/todos")
+def get_todos():
+    return {"todos": todos}
+
+
+#getById
+@app.get("/todos/{todo_id}")
+def get_todo(todo_id: int):
+    for todo in todos:
+        if todo.id == todo_id:
+            return {"todo": todo}
+    return {"message": "Todo not found"}
+
+#updateTodos
+@app.put("/todos/{todo_id}")
+def update_todo(todo_id: int, todo: Todo):
+    for index, t in enumerate(todos):
+        if t.id == todo_id:
+            todos[index] = todo
+            return {"message": "Todo updated", "todo": todo}
+    return {"message": "Todo not found"}
+
+
+#deleteTodos
+@app.delete("/todos/{todo_id}")
+def delete_todo(todo_id: int):
+    for index, t in enumerate(todos):
+        if t.id == todo_id:
+            todos.pop(index)
+            return {"message": "Todo deleted"}
+    return {"message": "Todo not found"}
+
+
+
+#addTodos withmultipleQueryParameters
+@app.post("/todosWithQueryParameters")
+def todos_with_query_parameters(todo : Todo):
+     todos.append(todo)
+     return {"message": "Todo created", "todo": todo}
+
+
+#updateTodos withmultipleQueryParameters
+@app.put("/todosWithQueryParameters/{todo_id}")
+def update_todos_with_query_parameters(todo_id: int, todo: Todo, completed: bool = False):
+    for index, t in enumerate(todos):
+        if t.id == todo_id:
+            todos[index] = todo
+            return {"message": "Todo updated", "todo": todo, "completed": completed}
+    return {"message": "Todo not found"}
